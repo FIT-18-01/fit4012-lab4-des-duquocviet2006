@@ -1,28 +1,33 @@
 #!/usr/bin/env bash
-# Test DES sample vector using mode 1.
+# Test DES sample t? code g?c v?i input/output chu?n
 set -euo pipefail
 
-PLAINTEXT="00010010001101000101011001111000100110101011110011011110111100011010101010101010"
+echo "Testing DES sample encryption..."
+
+# Test vectors t? code g?c
+PLAINTEXT="0001001000110100010101100111100010011010101111001101111011110001"
 KEY="0001001100110100010101110111100110011011101111001101111111110001"
-EXPECTED="01111110101111110100010010010011001000111111101011111010111110000100000010011111010110110001100000111000110100"
+EXPECTED="0111111010111111010001001001001100100011111110101111101011111000"
 
-if [[ ! -x ./des ]]; then
+if [[ ! -x ../des ]]; then
+  cd ..
   g++ -std=c++17 -Wall -Wextra -pedantic des.cpp -o des
+  cd tests
 fi
 
-OUTPUT=$(printf "1\n%s\n%s\n" "$PLAINTEXT" "$KEY" | ./des 2>&1 || true)
-ACTUAL=$(printf '%s\n' "$OUTPUT" | grep -oE '[01]{64,}' | tail -n 1)
-
-if [[ -z "$ACTUAL" ]]; then
-  echo "[FAIL] No binary output"
-  exit 1
-fi
+OUTPUT=$(printf "1\n%s\n%s\n" "$PLAINTEXT" "$KEY" | ../des 2>&1)
+ACTUAL=$(echo "$OUTPUT" | grep -oE "[01]{64,}" | tail -n 1)
 
 if [[ "$ACTUAL" != "$EXPECTED" ]]; then
-  echo "[FAIL] Output mismatch"
+  echo "FAIL: DES sample test failed"
   echo "Expected: $EXPECTED"
-  echo "Actual:   $ACTUAL"
+  echo "Actual: $ACTUAL"
+  echo "Full output:"
+  echo "$OUTPUT"
   exit 1
 fi
 
-echo "[PASS] DES sample test succeeded."
+echo "PASS: DES sample encryption works correctly"
+echo "Input: "
+echo "Key: "
+echo "Output: "

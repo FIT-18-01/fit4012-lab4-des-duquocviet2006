@@ -1,19 +1,20 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/BJH8GGf3)
-# FIT4012 - Lab 4: DES / TripleDES Implementation
+# FIT4012 - Lab 4: DES / TripleDES Starter Repository
 
-Repo này chứa mã nguồn cho bài Lab 4 của FIT4012, bao gồm DES và TripleDES theo contract nhập/xuất từ stdin.
+Repo này là **starter repo** cho Lab 4 của FIT4012.  
 
 ## 1. Cấu trúc repo
 
 ```text
 .
 ├── .github/
-│   ├── grading/
 │   ├── scripts/
+│   │   └── check_submission.sh
 │   └── workflows/
+│       └── ci.yml
 ├── logs/
 │   ├── .gitkeep
-│   └── 01-sample-output.txt
+│   └── README.md
 ├── scripts/
 │   └── run_sample.sh
 ├── tests/
@@ -32,90 +33,208 @@ Repo này chứa mã nguồn cho bài Lab 4 của FIT4012, bao gồm DES và Tri
 
 ## 2. Cách chạy chương trình (How to run)
 
-### Biên dịch
+### Cách 1: Dùng Makefile
 
 ```bash
-g++ -std=c++17 -Wall -Wextra -pedantic des.cpp -o des
-```
-
-### Chạy chương trình
-
-```bash
+make
 ./des
 ```
 
-### Ví dụ chạy mode DES encrypt
+### Cách 2: Biên dịch trực tiếp
 
 ```bash
-printf "1\n00010010001101000101011001111000100110101011110011011110111100011010101010101010\n0001001100110100010101110111100110011011101111001101111111110001\n" | ./des
+g++ -std=c++17 -Wall -Wextra -pedantic des.cpp -o des
+./des
+```
+
+### Cách 3: Dùng CMake
+
+```bash
+cmake -S . -B build
+cmake --build build
+./build/des
 ```
 
 ## 3. Input / Đầu vào
 
-Chương trình đọc từ stdin theo mode sau:
-- `1` = DES encrypt
-- `2` = DES decrypt
-- `3` = TripleDES encrypt
-- `4` = TripleDES decrypt
+Chương trình nhận dữ liệu từ stdin (standard input) theo định dạng sau:
 
-Với mode 1 và 2, chương trình đọc lần lượt:
-1. mode
-2. plaintext hoặc ciphertext nhị phân
-3. DES key 64-bit
+**Mode 1 (DES encrypt):**
+```
+1
+<plaintext_binary>
+<key_64bit>
+```
 
-Với mode 3 và 4, chương trình đọc lần lượt:
-1. mode
-2. plaintext hoặc ciphertext 64-bit
-3. key `K1` 64-bit
-4. key `K2` 64-bit
-5. key `K3` 64-bit
+**Mode 2 (DES decrypt):**
+```
+2
+<ciphertext_binary>
+<key_64bit>
+```
+
+**Mode 3 (TripleDES encrypt):**
+```
+3
+<plaintext_64bit>
+<key1_64bit>
+<key2_64bit>
+<key3_64bit>
+```
+
+**Mode 4 (TripleDES decrypt):**
+```
+4
+<ciphertext_64bit>
+<key1_64bit>
+<key2_64bit>
+<key3_64bit>
+```
+
+Tất cả dữ liệu đầu vào đều là chuỗi nhị phân (binary strings) không có khoảng trắng.
 
 ## 4. Output / Đầu ra
 
-Chương trình in ra kết quả cuối cùng dưới dạng chuỗi nhị phân:
-- DES encrypt (mode 1): `Ciphertext: <binary>`
-- DES decrypt (mode 2): `Plaintext: <binary>`
-- TripleDES encrypt (mode 3): `TripleDES Ciphertext: <binary>`
-- TripleDES decrypt (mode 4): `TripleDES Plaintext: <binary>`
+**Mode 1 & 3:** In ra ciphertext cuối cùng dưới dạng chuỗi nhị phân.
 
-CI sẽ trích xuất giá trị nhị phân cuối cùng từ output để so sánh với testcase.
+**Mode 2 & 4:** In ra plaintext cuối cùng dưới dạng chuỗi nhị phân.
+
+Chương trình cũng in ra các round keys trong quá trình xử lý để minh họa.
 
 ## 5. Padding đang dùng
 
-Chương trình sử dụng **zero padding** cho DES encrypt (mode 1):
-- Nếu plaintext không chia hết cho 64 bit, phần còn thiếu sẽ được điền `0`.
-- Dữ liệu được xử lý theo block 64 bit tuần tự.
-- Zero padding phù hợp cho bài học DES nhập môn nhưng không phải cơ chế an toàn sản xuất, bởi vì plaintext kết thúc bằng nhiều `0` sẽ gây nhầm lẫn khi giải mã.
+Chương trình sử dụng **zero padding** cho multi-block encryption:
+
+- Plaintext được chia thành các block 64-bit
+- Block cuối nếu thiếu bit sẽ được đệm bằng `0` ở cuối để đủ 64 bit
+- Ví dụ: plaintext 74-bit sẽ thành 2 block: 64-bit đầu + 10-bit + 54-bit `0`
+
+**Hạn chế của zero padding:**
+- Không thể phân biệt được padding thật hay dữ liệu gốc có bit `0`
+- Chỉ phù hợp cho bài học nhập môn, không an toàn trong thực tế
+- Trong thực tế nên dùng PKCS#7 padding hoặc CBC với IV ngẫu nhiên
 
 ## 6. Tests bắt buộc
 
-Repo này đã hoàn thành 5 test:
+Repo này đã tạo sẵn **5 tên file test mẫu** để sinh viên điền nội dung:
+
 - `tests/test_des_sample.sh`
 - `tests/test_encrypt_decrypt_roundtrip.sh`
 - `tests/test_multiblock_padding.sh`
 - `tests/test_tamper_negative.sh`
 - `tests/test_wrong_key_negative.sh`
 
-Các test kiểm tra DES cơ bản, round-trip encrypt/decrypt, multi-block padding, trường hợp tamper và sai key.
+Sinh viên phải tự hoàn thiện test và bổ sung minh chứng chạy.
 
 ## 7. Logs / Minh chứng
 
-`logs/01-sample-output.txt` chứa minh chứng đầu ra của chương trình khi chạy sample DES và TripleDES.
+Thư mục `logs/` dùng để nộp minh chứng, ví dụ:
+- ảnh chụp màn hình khi chạy chương trình
+- output của test
+- log thử đúng / sai key / tamper
+- log cho mã hóa nhiều block
 
 ## 8. Ethics & Safe use
 
-- Chỉ chạy và kiểm thử trên dữ liệu học tập, dữ liệu giả lập hoặc các trường hợp mẫu.
-- Không dùng repo này để tấn công hệ thống thật.
-- Không trình bày đây là một giải pháp bảo mật sẵn sàng triển khai.
-- Nếu tham khảo code, tài liệu hoặc AI, phải nêu rõ nguồn.
-- Tôn trọng nguyên tắc trung thực học thuật và chỉ nộp kết quả do chính mình thực hiện.
+- Chỉ chạy và kiểm thử trên dữ liệu học tập hoặc dữ liệu giả lập.
+- Không dùng repo này để tấn công hay can thiệp hệ thống thật.
+- Không trình bày đây là công cụ bảo mật sẵn sàng cho môi trường sản xuất.
+- Nếu tham khảo mã, tài liệu, công cụ hoặc AI, phải ghi nguồn rõ ràng.
+- Khi cộng tác nhóm, cần trung thực học thuật và mô tả đúng phần việc của mình.
+- Việc kiểm thử chỉ phục vụ học DES / TripleDES ở mức nhập môn.
 
 ## 9. Checklist nộp bài
 
-- `des.cpp` đã hoàn chỉnh theo contract stdin/out.
-- `README.md` đã mô tả rõ cách chạy, input, output, padding và ethics.
-- `report-1page.md` đã hoàn thành.
-- `tests/` có ít nhất 5 test.
-- Có negative test cho `tamper` và `wrong key`.
-- `logs/` có ít nhất 1 file minh chứng thật.
-- Không còn placeholder `TODO_STUDENT`.
+Trước khi nộp, cần có:
+- `des.cpp`
+- `README.md` hoàn chỉnh
+- `report-1page.md` hoàn chỉnh
+- `tests/` với ít nhất 5 test
+- có negative test cho `tamper` và `wrong key`
+- `logs/` có ít nhất 1 file minh chứng thật
+- không còn dòng placeholder
+
+## 10. Lưu ý về CI
+
+CI sẽ **không chỉ kiểm tra file có tồn tại** mà còn kiểm tra:
+- các mục bắt buộc trong README
+- các mục bắt buộc trong report
+- sự hiện diện của negative tests
+- có minh chứng trong `logs/`
+- repo **không còn placeholder**
+
+Vì vậy repo starter này sẽ **chưa pass CI** cho tới khi sinh viên hoàn thiện nội dung.
+
+
+## 11. Submission contract để auto-check Q2 và Q4
+
+Để GitHub Actions kiểm tra được **Q2** và **Q4**, repo này dùng **một contract nhập/xuất thống nhất**.
+Sinh viên cần sửa `des.cpp` để chương trình nhận dữ liệu từ **stdin** theo đúng thứ tự sau:
+
+```text
+Chọn mode:
+1 = DES encrypt
+2 = DES decrypt
+3 = TripleDES encrypt
+4 = TripleDES decrypt
+```
+
+### Mode 1: DES encrypt 
+Nhập lần lượt:
+1. `1`
+2. plaintext nhị phân
+3. key 64-bit
+
+Yêu cầu:
+- nếu plaintext dài hơn 64 bit: chia block 64 bit và mã hóa tuần tự
+- nếu block cuối thiếu bit: zero padding
+- in ra **ciphertext cuối cùng** dưới dạng chuỗi nhị phân
+
+### Mode 2: DES decrypt
+Nhập lần lượt:
+1. `2`
+2. ciphertext nhị phân
+3. key 64-bit
+
+Yêu cầu:
+- giải mã DES theo round keys đảo ngược
+- in ra plaintext cuối cùng
+
+### Mode 3: TripleDES encrypt 
+Nhập lần lượt:
+1. `3`
+2. plaintext 64-bit
+3. `K1`
+4. `K2`
+5. `K3`
+
+Yêu cầu:
+- thực hiện đúng chuỗi **E(K3, D(K2, E(K1, P)))**
+- in ra ciphertext cuối cùng
+
+### Mode 4: TripleDES decrypt 
+Nhập lần lượt:
+1. `4`
+2. ciphertext 64-bit
+3. `K1`
+4. `K2`
+5. `K3`
+
+Yêu cầu:
+- thực hiện giải mã TripleDES ngược lại
+- in ra plaintext cuối cùng
+
+### Lưu ý về output
+- Có thể in prompt tiếng Việt hoặc tiếng Anh.
+- Có thể in thêm round keys hay thông báo trung gian.
+- Nhưng **kết quả cuối cùng phải xuất hiện dưới dạng một chuỗi nhị phân dài hợp lệ** để CI tách và đối chiếu.
+
+## 14. CI hiện kiểm tra được gì
+
+Ngoài checklist nộp bài, CI hiện còn kiểm tra tự động:
+- chương trình thực sự nhận plaintext/key từ bàn phím và mã hóa multi-block với zero padding đúng.
+- chương trình thực sự mã hóa và giải mã TripleDES đúng theo vector kiểm thử.
+
+Nói cách khác, nếu sinh viên chỉ sửa README/tests cho đủ hình thức mà **không làm Q2 hoặc Q4**, CI sẽ vẫn fail.
+# Update to trigger CI
+

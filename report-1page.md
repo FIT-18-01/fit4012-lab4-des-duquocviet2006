@@ -2,33 +2,47 @@
 
 ## Mục tiêu
 
-Xây dựng chương trình DES và TripleDES theo contract nhập/xuất từ stdin. Mục tiêu cụ thể là:
-- Thực hiện DES encrypt/decrypt với dữ liệu dạng nhị phân.
-- Hỗ trợ mã hóa đa block với zero padding.
-- Thực hiện TripleDES theo chuỗi E(K3, D(K2, E(K1, P))) và giải mã tương ứng.
-- Đảm bảo CI có thể kiểm tra tự động Q2 và Q4.
+Hoàn thiện implementation DES và TripleDES từ code base có sẵn, hỗ trợ cả encryption và decryption với multi-block input và zero padding.
 
 ## Cách làm / Method
 
-- Hoàn thiện `des.cpp` để chương trình đọc mode từ stdin và xử lý lần lượt các dòng input.
-- Triển khai `KeyGenerator` sinh 16 round key theo PC-1/PC-2 và dịch trái theo chuẩn DES.
-- Xây dựng lớp `DES` để thực hiện 16 round Feistel, mở rộng E-bit, S-box và phép hoán vị P.
-- Với mode 1, chia plaintext nhị phân thành block 64 bit và zero pad nếu cần.
-- Với mode 2, giải mã ciphertext bằng round keys đảo ngược.
-- Với mode 3/4, thực hiện TripleDES theo chuẩn EDE.
-- Hoàn thiện test script trong `tests/` và bổ sung log chạy mẫu.
+- Bổ sung hàm `decrypt()` cho class DES bằng cách sử dụng round keys theo thứ tự đảo ngược
+- Thêm hàm `pad_binary_string()` để xử lý zero padding cho multi-block
+- Cập nhật hàm `main()` để nhận input từ stdin theo 4 modes: DES encrypt/decrypt, TripleDES encrypt/decrypt
+- Implement TripleDES với EDE (Encrypt-Decrypt-Encrypt) và reverse EDE cho decryption
+- Test với các test vectors từ file grading để đảm bảo tính chính xác
 
 ## Kết quả / Result
 
-- Chương trình đã chạy đúng contract stdin mode 1/2/3/4.
-- Q2 pass trên vector mẫu: multi-block DES encrypt với zero padding.
-- Q4 pass trên vector TripleDES: encrypt và decrypt đúng theo EDE.
-- `tests/` bao gồm 5 script, trong đó có test tamper và wrong key.
-- `logs/01-sample-output.txt` chứa kết quả chạy mẫu làm minh chứng.
+- ✅ DES encryption/decryption hoạt động chính xác
+- ✅ Multi-block encryption với zero padding
+- ✅ TripleDES EDE encryption/decryption với round-trip verification
+- ✅ Input từ stdin theo contract thống nhất
+- ✅ Output ciphertext/plaintext dưới dạng binary strings
+- ✅ Tất cả test Q2 và Q4 pass
+
+Ví dụ kết quả DES encrypt:
+```
+Input: 0001001000110100010101100111100010011010101111001101111011110001
+Key: 0001001100110100010101110111100110011011101111001101111111110001
+Output: 0111111010111111010001001001001100100011111110101111101011111000
+```
 
 ## Kết luận / Conclusion
 
-- Đã nắm được cách tổ chức DES: hoán vị IP/IP-1, E-bit, S-box, P, round key.
-- Hiểu rõ giới hạn của zero padding: không đủ để nhận biết độ dài ban đầu khi decrypt.
-- TripleDES được triển khai đúng theo E(K3, D(K2, E(K1, P))) và giải mã ngược lại.
-- Có thể mở rộng tiếp bằng các cơ chế padding an toàn hơn hoặc thêm giao diện file input/output.
+Đã hoàn thành implementation DES/TripleDES cơ bản với các tính năng:
+- DES single-block và multi-block encryption/decryption
+- TripleDES EDE với 3 keys độc lập
+- Zero padding cho multi-block
+- Input/output handling qua stdin
+
+**Hạn chế hiện tại:**
+- Zero padding không an toàn cho production use
+- Không có error handling cho invalid input
+- Không hỗ trợ CBC mode hay IV
+
+**Hướng mở rộng:**
+- Thêm PKCS#7 padding
+- Implement CBC mode với IV
+- Hỗ trợ file input/output
+- Thêm validation cho input keys và data
